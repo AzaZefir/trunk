@@ -28,8 +28,11 @@ function App() {
   const [additionalItems, setAdditionalItems] = useState([]);
   const [draggedItem, setDraggedItem] = useState(null);
   const [draggedFrom, setDraggedFrom] = useState(null);
-
-  const totalSlots = calculateTotalSlots({ data: bagData, initialTotal: 20 });
+  const [highlightedBagSlot, setHighlightedBagSlot] = useState(null);
+  const [highlightedPocketSlot, setHighlightedPocketSlot] = useState(null);
+  const [highlightedDocSlot, setHighlightedDocSlot] = useState(null);
+  const [highlightedAdditionalSlot, setHighlightedAdditionalSlot] =
+    useState(null);
 
   const handlePocketOpen = () => {
     setIsPocketOpen(true);
@@ -42,21 +45,60 @@ function App() {
   };
 
   useEffect(() => {
-    setPocketItems(pocketData);
-    setDocItems(docsData);
-    setBagItems(bagData);
+    const initializeItems = (data) => {
+      const items = new Array(20).fill(null);
+      let currentIndex = 0;
+
+      data.forEach((item) => {
+        if (item.width === 2) {
+          items[currentIndex] = { ...item, isFirstCopy: true };
+          items[currentIndex + 1] = {
+            ...item,
+            isCopy: true,
+            isFirstCopy: false,
+          };
+          currentIndex += 2;
+        } else if (item.height === 2) {
+          items[currentIndex] = { ...item, isFirstCopy: true };
+          items[currentIndex + 5] = {
+            ...item,
+            isCopy: true,
+            isFirstCopy: false,
+          };
+          currentIndex += 1;
+        } else {
+          items[currentIndex] = item;
+          currentIndex += 1;
+        }
+      });
+
+      return items;
+    };
+
+    setPocketItems(initializeItems(pocketData));
+    setDocItems(initializeItems(docsData));
+    setBagItems(initializeItems(bagData));
   }, []);
 
+  const handleDragOver = (e, index, section) => {
+    e.preventDefault();
+    if (section === "pocket") {
+      setHighlightedPocketSlot(index);
+    } else if (section === "docs") {
+      setHighlightedDocSlot(index);
+    } else if (section === "bag") {
+      setHighlightedBagSlot(index);
+    } else if (section === "additional") {
+      setHighlightedAdditionalSlot(index);
+    }
+  };
+
   const handleDragStart = (e, item, from, index) => {
+    if (item.isCopy) return;
     setDraggedItem(item);
     setDraggedFrom({ from, index });
   };
 
-  // функция отвечающая за логику перемещения предметов
-  // TODO: priority - important: сделать так чтобы при перемещении двуслотных предметов не ломалась grid сетка
-  // TODO: при перемещении двуслотных предметов во время наведения на другие слоты как с предметами так и без подсвечивать не один слот а два
-  // TODO: менять двуслотные предметы на два наведенных целевых предмета
-  // TODO: не давать сдвигать предметы при вставке двуслотных предметов
   const handleDrop = (e, to, index) => {
     e.preventDefault();
     if (draggedItem && draggedFrom) {
@@ -90,32 +132,102 @@ function App() {
         setToItems = setAdditionalItems;
       }
 
-      // TODO: пофиксить: при использовании spread оператора [...fromItems], [...toItems] дублирование предметов
-      // Переместить предметы
       const newFromItems = fromItems;
       const newToItems = toItems;
 
-      // Запомнить предмет в слоте назначения
+      // Функция для проверки, занят ли индекс двухслотовым элементом
+      const isTwoSlotItem = (idx) => {
+        return (
+          newToItems[idx] &&
+          (newToItems[idx].width === 2 || newToItems[idx].height === 2)
+        );
+      };
+
+      // Функция проверки того, является ли перетаскиваемый элемент элементом с двумя слотами
+      const isDraggedItemTwoSlot = () => {
+        return draggedItem.width === 2 || draggedItem.height === 2;
+      };
+
+      // Проверка, являются ли draggedItem и targetItem элементами с двумя слотами.
+      if (isDraggedItemTwoSlot() && isTwoSlotItem(index)) {
+        console.log("Cannot swap two-slot items");
+        clearHighlight();
+        return; // Выходим раньше, чтобы предотвратить дальнейшее выполнение
+      }
+
+      // Проверка, имеет ли перетаскиваемыйItem ширину или высоту 2.
+      if (draggedItem.width === 2 || draggedItem.height === 2) {
+        // Предотвратить падение рядом с другим предметом с двумя слотами.
+        if (
+          (index < newToItems.length - 1 &&
+            isTwoSlotItem(index + 1) &&
+            draggedItem.height !== 2) || // Правый слот
+          (index < newToItems.length - 5 &&
+            isTwoSlotItem(index + 5) &&
+            draggedItem.width !== 2) || // Нижний слот
+          (draggedItem.width === 2 && index % 5 === 4) || // Запретить размещение элемента шириной 2 на правом краю
+          (draggedItem.height === 2 && index >= 15) // Запретить размещение элемента высотой 2 на нижнем крае
+        ) {
+          console.log("Cannot drop item here due to constraints");
+          clearHighlight();
+          return; // Выходим раньше, чтобы предотвратить дальнейшее выполнение
+        }
+      }
+
+      // Проверка, является ли целевой элемент двухслотовым элементом
       const targetItem = newToItems[index];
+      if (targetItem && (targetItem.width === 2 || targetItem.height === 2)) {
+        console.log("Cannot swap with a two-slot item");
+        clearHighlight();
+        return;
+      }
 
-      // Переместить предмет в слот назначения
-      newToItems[index] = draggedItem;
+      // Обычная обработка предметов без ширины и высоты 2
+      if (draggedItem.width === 2) {
+        const targetItem = newToItems[index];
+        const targetItemNext = newToItems[index + 1];
 
-      // Если в слоте назначения был предмет, переместить его на место исходного предмета
-      if (targetItem) {
-        newFromItems[draggedFrom.index] = targetItem;
+        newFromItems[draggedFrom.index] = targetItem || null;
+        newFromItems[draggedFrom.index + 1] = targetItemNext || null;
+
+        newToItems[index] = { ...draggedItem, isFirstCopy: true };
+        newToItems[index + 1] = {
+          ...draggedItem,
+          isCopy: true,
+          isFirstCopy: false,
+        };
+      } else if (draggedItem.height === 2) {
+        const targetItem = newToItems[index];
+        const targetItemBelow = newToItems[index + 5];
+
+        newFromItems[draggedFrom.index] = targetItem || null;
+        newFromItems[draggedFrom.index + 5] = targetItemBelow || null;
+
+        newToItems[index] = { ...draggedItem, isFirstCopy: true };
+        newToItems[index + 5] = {
+          ...draggedItem,
+          isCopy: true,
+          isFirstCopy: false,
+        };
       } else {
-        newFromItems[draggedFrom.index] = null;
+        const targetItem = newToItems[index];
+        newFromItems[draggedFrom.index] = targetItem || null;
+        newToItems[index] = draggedItem;
       }
 
       setFromItems(newFromItems);
       setToItems(newToItems);
-
       setDraggedItem(null);
       setDraggedFrom(null);
+      clearHighlight();
     }
   };
-
+  const clearHighlight = () => {
+    setHighlightedPocketSlot(null);
+    setHighlightedDocSlot(null);
+    setHighlightedBagSlot(null);
+    setHighlightedAdditionalSlot(null);
+  };
   return (
     <section className={style.inventoryWrapper}>
       <header className={style.inventoryHeader}>
@@ -155,15 +267,46 @@ function App() {
                   {Array.from({ length: 10 }).map((_, index) => (
                     <div
                       className={`${style.inventorySlot} ${
-                        pocketItems[index]?.width === 2 ? style.doubleSlot : ""
-                      } ${
-                        pocketItems[index]?.height === 2
-                          ? style.doubleHeightSlot
-                          : ""
-                      }`}
+                        highlightedPocketSlot === index ? style.highlight : ""
+                      } `}
                       key={index}
-                      onDragOver={(e) => e.preventDefault()}
+                      onDragOver={(e) =>
+                        handleDragOver(
+                          e,
+                          index,
+                          isPocketOpen ? "pocket" : "docs"
+                        )
+                      }
                       onDrop={(e) => handleDrop(e, "pocket", index)}
+                      style={{
+                        position: `${
+                          (pocketItems[index]?.width === 2 &&
+                            pocketItems[index]?.isFirstCopy) ||
+                          pocketItems[index]?.height === 2
+                            ? "relative"
+                            : ""
+                        }`,
+                        zIndex: `${
+                          (pocketItems[index]?.width === 2 &&
+                            pocketItems[index]?.isFirstCopy) ||
+                          (pocketItems[index]?.height === 2 &&
+                            pocketItems[index]?.isFirstCopy)
+                            ? "1"
+                            : ""
+                        }`,
+                        width: `${
+                          pocketItems[index]?.width === 2 &&
+                          pocketItems[index]?.isFirstCopy
+                            ? "119px"
+                            : ""
+                        }`,
+                        height: `${
+                          pocketItems[index]?.height === 2 &&
+                          pocketItems[index]?.isFirstCopy
+                            ? "119px"
+                            : ""
+                        }`,
+                      }}
                     >
                       {pocketItems[index] && (
                         <img
@@ -188,6 +331,14 @@ function App() {
                                 ? "100%"
                                 : ""
                             }`,
+                            display: `${
+                              (pocketItems[index]?.width === 2 &&
+                                !pocketItems[index]?.isFirstCopy) ||
+                              (pocketItems[index]?.height === 2 &&
+                                !pocketItems[index]?.isFirstCopy)
+                                ? "none"
+                                : ""
+                            }`,
                           }}
                         />
                       )}
@@ -200,15 +351,40 @@ function App() {
                   {Array.from({ length: 10 }).map((_, index) => (
                     <div
                       className={`${style.inventorySlot} ${
-                        docsItems[index]?.width === 2 ? style.doubleSlot : ""
-                      } ${
-                        docsItems[index]?.height === 2
-                          ? style.doubleHeightSlot
-                          : ""
-                      }`}
+                        highlightedDocSlot === index ? style.highlight : ""
+                      } `}
                       key={index}
-                      onDragOver={(e) => e.preventDefault()}
+                      onDragOver={(e) => handleDragOver(e, index, "docs")}
                       onDrop={(e) => handleDrop(e, "docs", index)}
+                      style={{
+                        position: `${
+                          (docsItems[index]?.width === 2 &&
+                            docsItems[index]?.isFirstCopy) ||
+                          docsItems[index]?.height === 2
+                            ? "relative"
+                            : ""
+                        }`,
+                        zIndex: `${
+                          (docsItems[index]?.width === 2 &&
+                            docsItems[index]?.isFirstCopy) ||
+                          (docsItems[index]?.height === 2 &&
+                            docsItems[index]?.isFirstCopy)
+                            ? "1"
+                            : ""
+                        }`,
+                        width: `${
+                          docsItems[index]?.width === 2 &&
+                          docsItems[index]?.isFirstCopy
+                            ? "119px"
+                            : ""
+                        }`,
+                        height: `${
+                          docsItems[index]?.height === 2 &&
+                          docsItems[index]?.isFirstCopy
+                            ? "119px"
+                            : ""
+                        }`,
+                      }}
                     >
                       {docsItems[index] && (
                         <img
@@ -228,6 +404,14 @@ function App() {
                                 ? "100%"
                                 : ""
                             }`,
+                            display: `${
+                              (docsItems[index]?.width === 2 &&
+                                !docsItems[index]?.isFirstCopy) ||
+                              (docsItems[index]?.height === 2 &&
+                                !docsItems[index]?.isFirstCopy)
+                                ? "none"
+                                : ""
+                            }`,
                           }}
                         />
                       )}
@@ -241,14 +425,10 @@ function App() {
               {Array.from({ length: 12 }).map((_, index) => (
                 <div
                   className={`${style.inventorySlot} ${
-                    additionalItems[index]?.width === 2 ? style.doubleSlot : ""
-                  } ${
-                    additionalItems[index]?.height === 2
-                      ? style.doubleHeightSlot
-                      : ""
-                  }`}
+                    highlightedAdditionalSlot === index ? style.highlight : ""
+                  } `}
                   key={index}
-                  onDragOver={(e) => e.preventDefault()}
+                  onDragOver={(e) => handleDragOver(e, index, "additional")}
                   onDrop={(e) => handleDrop(e, "additional", index)}
                 >
                   {additionalItems[index] && (
@@ -292,18 +472,43 @@ function App() {
                 <p>1/25 кг</p>
               </div>
               <div className={style.inventoryFiveColSlots}>
-                {Array.from({ length: totalSlots }).map((_, index) => (
+                {Array.from({ length: 20 }).map((_, index) => (
                   <div
                     className={`${style.inventorySlot} ${
-                      bagItems[index]?.width === 2 ? style.doubleSlot : ""
-                    } ${
-                      bagItems[index]?.height === 2
-                        ? style.doubleHeightSlot
-                        : ""
-                    }`}
+                      highlightedBagSlot === index ? style.highlight : ""
+                    } `}
                     key={index}
-                    onDragOver={(e) => e.preventDefault()}
+                    onDragOver={(e) => handleDragOver(e, index, "bag")}
                     onDrop={(e) => handleDrop(e, "bag", index)}
+                    style={{
+                      position: `${
+                        (bagItems[index]?.width === 2 &&
+                          bagItems[index]?.isFirstCopy) ||
+                        bagItems[index]?.height === 2
+                          ? "relative"
+                          : ""
+                      }`,
+                      zIndex: `${
+                        (bagItems[index]?.width === 2 &&
+                          bagItems[index]?.isFirstCopy) ||
+                        (bagItems[index]?.height === 2 &&
+                          bagItems[index]?.isFirstCopy)
+                          ? "1"
+                          : ""
+                      }`,
+                      width: `${
+                        bagItems[index]?.width === 2 &&
+                        bagItems[index]?.isFirstCopy
+                          ? "119px"
+                          : ""
+                      }`,
+                      height: `${
+                        bagItems[index]?.height === 2 &&
+                        bagItems[index]?.isFirstCopy
+                          ? "119px"
+                          : ""
+                      }`,
+                    }}
                   >
                     {bagItems[index] && (
                       <img
@@ -323,6 +528,14 @@ function App() {
                               ? "40px"
                               : bagItems[index]?.width === 2
                               ? "100%"
+                              : ""
+                          }`,
+                          display: `${
+                            (bagItems[index]?.width === 2 &&
+                              !bagItems[index]?.isFirstCopy) ||
+                            (bagItems[index]?.height === 2 &&
+                              !bagItems[index]?.isFirstCopy)
+                              ? "none"
                               : ""
                           }`,
                         }}

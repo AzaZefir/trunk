@@ -193,7 +193,7 @@ export const bagData = [
     type: "food",
   },
   {
-    itemId: 26,
+    itemId: 22,
     name: "fuel",
     quantity: 1,
     data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719317984/fuel-svgrepo-com_cy34me.svg",
@@ -206,7 +206,7 @@ export const bagData = [
 
 export const docsData = [
   {
-    itemId: 22,
+    itemId: 23,
     name: "Mango",
     quantity: 3,
     data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719743206/fruit-manga-mango-svgrepo-com_kwfduh.svg",
@@ -216,7 +216,7 @@ export const docsData = [
     type: "food",
   },
   {
-    itemId: 23,
+    itemId: 24,
     name: "mask",
     quantity: 3,
     data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719317988/gas-mask-svgrepo-com_j619tv.svg",
@@ -226,7 +226,7 @@ export const docsData = [
     type: "steelArms",
   },
   {
-    itemId: 24,
+    itemId: 25,
     name: "body armor",
     quantity: 3,
     data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719316867/bulletproof-vest-svgrepo-com_fuu3es.svg",
@@ -236,7 +236,7 @@ export const docsData = [
     type: "food",
   },
   {
-    itemId: 25,
+    itemId: 26,
     name: "Duff",
     quantity: 2,
     data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719743205/beer-svgrepo-com_xlekdy.svg",

@@ -227,17 +227,19 @@ button {
           display: flex;
           align-items: center;
           justify-content: center;
-          position: relative;
           overflow: hidden;
-          &.doubleSlot {
-            grid-column: span 2;
-          }
-          &.doubleHeightSlot {
-            grid-row: span 2;
-          }
+
           img {
             cursor: grab;
           }
+          &.highlight {
+            background-color: #303030;
+          }
+        }
+        .bagHiddingPlace {
+          background-color: rgba(201, 157, 62, 0.4);
+          grid-column: 5;
+          grid-row: 1;
         }
       }
       .inventoryFourColSlots {
@@ -275,11 +277,8 @@ button {
           &:last-child {
             border-radius: 0 0 5px 0;
           }
-          &.doubleSlot {
-            grid-column: span 2;
-          }
-          &.doubleHeightSlot {
-            grid-row: span 2;
+          &.highlight {
+            background-color: #303030;
           }
           img {
             cursor: grab;
