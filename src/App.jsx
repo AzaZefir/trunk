@@ -26,13 +26,18 @@ function App() {
   const [docsItems, setDocItems] = useState([]);
   const [bagItems, setBagItems] = useState([]);
   const [additionalItems, setAdditionalItems] = useState([]);
+
   const [draggedItem, setDraggedItem] = useState(null);
   const [draggedFrom, setDraggedFrom] = useState(null);
+
   const [highlightedBagSlot, setHighlightedBagSlot] = useState(null);
   const [highlightedPocketSlot, setHighlightedPocketSlot] = useState(null);
   const [highlightedDocSlot, setHighlightedDocSlot] = useState(null);
   const [highlightedAdditionalSlot, setHighlightedAdditionalSlot] =
     useState(null);
+
+  // Тайники
+  const [bagHidingPlace, setBagHidingPlace] = useState(null);
 
   const handlePocketOpen = () => {
     setIsPocketOpen(true);
@@ -166,7 +171,10 @@ function App() {
             isTwoSlotItem(index + 5) &&
             draggedItem.width !== 2) || // Нижний слот
           (draggedItem.width === 2 && index % 5 === 4) || // Запретить размещение элемента шириной 2 на правом краю
-          (draggedItem.height === 2 && index >= 15) // Запретить размещение элемента высотой 2 на нижнем крае
+          (draggedItem.height === 2 && index >= 15 && to !== "pocket") || // Запретить размещение элемента высотой 2 на нижнем крае
+          (draggedItem.height === 2 && index >= 15 && to !== "docs") || // Запретить размещение элемента высотой 2 на нижнем крае
+          (draggedItem.height === 2 && index >= 5 && to === "pocket") || // Запретить размещение элемента высотой 2 на нижнем крае
+          (draggedItem.height === 2 && index >= 5 && to === "docs") // Запретить размещение элемента высотой 2 на нижнем крае
         ) {
           console.log("Cannot drop item here due to constraints");
           clearHighlight();
