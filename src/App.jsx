@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import style from "./App.module.scss";
-import { calculateTotalSlots } from "./utils/calculateTotalSlots";
 import logo from "./assets/logo.svg";
 import health from "./assets/health.svg";
 import water from "./assets/water.svg";
@@ -37,7 +36,8 @@ function App() {
     useState(null);
 
   // Тайники
-  const [bagHidingPlace, setBagHidingPlace] = useState(null);
+  const [bagHidingPlaces, setBagHidingPlaces] = useState([]);
+  const [pocketHidingPlaces, setPocketHidingPlaces] = useState([]);
 
   const handlePocketOpen = () => {
     setIsPocketOpen(true);
@@ -50,39 +50,65 @@ function App() {
   };
 
   useEffect(() => {
-    const initializeItems = (data) => {
+    const initializeItems = (data, skipIndices = []) => {
       const items = new Array(20).fill(null);
       let currentIndex = 0;
 
       data.forEach((item) => {
         if (item.width === 2) {
-          items[currentIndex] = { ...item, isFirstCopy: true };
-          items[currentIndex + 1] = {
-            ...item,
-            isCopy: true,
-            isFirstCopy: false,
-          };
-          currentIndex += 2;
+          while (
+            skipIndices.includes(currentIndex) ||
+            skipIndices.includes(currentIndex + 1)
+          ) {
+            currentIndex += 2;
+          }
+          if (currentIndex < items.length) {
+            items[currentIndex] = { ...item, isFirstCopy: true };
+            if (currentIndex + 1 < items.length) {
+              items[currentIndex + 1] = {
+                ...item,
+                isCopy: true,
+                isFirstCopy: false,
+              };
+            }
+            currentIndex += 2;
+          }
         } else if (item.height === 2) {
-          items[currentIndex] = { ...item, isFirstCopy: true };
-          items[currentIndex + 5] = {
-            ...item,
-            isCopy: true,
-            isFirstCopy: false,
-          };
-          currentIndex += 1;
+          while (
+            skipIndices.includes(currentIndex) ||
+            skipIndices.includes(currentIndex + 5)
+          ) {
+            currentIndex += 1;
+          }
+          if (currentIndex < items.length) {
+            items[currentIndex] = { ...item, isFirstCopy: true };
+            if (currentIndex + 5 < items.length) {
+              items[currentIndex + 5] = {
+                ...item,
+                isCopy: true,
+                isFirstCopy: false,
+              };
+            }
+            currentIndex += 1;
+          }
         } else {
-          items[currentIndex] = item;
-          currentIndex += 1;
+          while (skipIndices.includes(currentIndex)) {
+            currentIndex += 1;
+          }
+          if (currentIndex < items.length) {
+            items[currentIndex] = item;
+            currentIndex += 1;
+          }
         }
       });
 
       return items;
     };
 
-    setPocketItems(initializeItems(pocketData));
+    // Initialize items with specific indices to skip (4 and 9)
+    setPocketItems(initializeItems(pocketData, [4]));
     setDocItems(initializeItems(docsData));
-    setBagItems(initializeItems(bagData));
+    setBagItems(initializeItems(bagData, [4, 9]));
   }, []);
 
   const handleDragOver = (e, index, section) => {
@@ -120,6 +146,12 @@ function App() {
       } else if (draggedFrom.from === "additional") {
         fromItems = additionalItems;
         setFromItems = setAdditionalItems;
+      } else if (draggedFrom.from === "bagHidingPlace") {
+        fromItems = bagHidingPlaces;
+        setFromItems = setBagHidingPlaces;
+      } else if (draggedFrom.from === "pocketHidingPlace") {
+        fromItems = pocketHidingPlaces;
+        setFromItems = setPocketHidingPlaces;
       }
 
       let toItems, setToItems;
@@ -135,6 +167,12 @@ function App() {
       } else if (to === "additional") {
         toItems = additionalItems;
         setToItems = setAdditionalItems;
+      } else if (to === "bagHidingPlace") {
+        toItems = bagHidingPlaces;
+        setToItems = setBagHidingPlaces;
+      } else if (to === "pocketHidingPlace") {
+        toItems = pocketHidingPlaces;
+        setToItems = setPocketHidingPlaces;
       }
 
       const newFromItems = fromItems;
@@ -160,9 +198,29 @@ function App() {
         return; // Выходим раньше, чтобы предотвратить дальнейшее выполнение
       }
 
+      if (
+        (to === "bagHidingPlace" || to === "pocketHidingPlace") &&
+        draggedItem.weight > 0.5
+      ) {
+        console.log(
+          "Cannot place item in hiding place as it exceeds weight limit"
+        );
+        clearHighlight();
+        return;
+      }
+
       // Проверка, имеет ли перетаскиваемыйItem ширину или высоту 2.
       if (draggedItem.width === 2 || draggedItem.height === 2) {
         // Предотвратить падение рядом с другим предметом с двумя слотами.
+        const rowIndex = Math.floor(index / 5);
+
+        // Check if the dragged item is trying to be placed at the right edge
+        const isAtRightEdge =
+          (rowIndex < 2 && index % 5 === 3) || // First two rows, right edge is index 4
+          (rowIndex >= 2 && index % 5 === 4); // Last two rows, right edge is index 5
+        const isAtRightPocketEdge =
+          (rowIndex < 1 && index % 5 === 3) || // First two rows, right edge is index 4
+          (rowIndex >= 1 && index % 5 === 4);
         if (
           (index < newToItems.length - 1 &&
             isTwoSlotItem(index + 1) &&
@@ -170,6 +228,8 @@ function App() {
           (index < newToItems.length - 5 &&
             isTwoSlotItem(index + 5) &&
             draggedItem.width !== 2) || // Нижний слот
+          (draggedItem.width === 2 && isAtRightEdge && to === "bag") || // Запретить размещение элемента шириной 2 на правом краю
+          (draggedItem.width === 2 && isAtRightPocketEdge && to === "pocket") || // Запретить размещение элемента шириной 2 на правом краю
           (draggedItem.width === 2 && index % 5 === 4) || // Запретить размещение элемента шириной 2 на правом краю
           (draggedItem.height === 2 && index >= 15 && to !== "pocket") || // Запретить размещение элемента высотой 2 на нижнем крае
           (draggedItem.height === 2 && index >= 15 && to !== "docs") || // Запретить размещение элемента высотой 2 на нижнем крае
@@ -230,12 +290,14 @@ function App() {
       clearHighlight();
     }
   };
+
   const clearHighlight = () => {
     setHighlightedPocketSlot(null);
     setHighlightedDocSlot(null);
     setHighlightedBagSlot(null);
     setHighlightedAdditionalSlot(null);
   };
+
   return (
     <section className={style.inventoryWrapper}>
       <header className={style.inventoryHeader}>
@@ -272,88 +334,209 @@ function App() {
               </div>
               {isPocketOpen && (
                 <div className={style.inventoryFiveColSlots}>
-                  {Array.from({ length: 10 }).map((_, index) => (
-                    <div
-                      className={`${style.inventorySlot} ${
-                        highlightedPocketSlot === index ? style.highlight : ""
-                      } `}
-                      key={index}
-                      onDragOver={(e) =>
-                        handleDragOver(
-                          e,
-                          index,
-                          isPocketOpen ? "pocket" : "docs"
-                        )
-                      }
-                      onDrop={(e) => handleDrop(e, "pocket", index)}
-                      style={{
-                        position: `${
-                          (pocketItems[index]?.width === 2 &&
-                            pocketItems[index]?.isFirstCopy) ||
-                          pocketItems[index]?.height === 2
-                            ? "relative"
-                            : ""
-                        }`,
-                        zIndex: `${
-                          (pocketItems[index]?.width === 2 &&
-                            pocketItems[index]?.isFirstCopy) ||
-                          (pocketItems[index]?.height === 2 &&
-                            pocketItems[index]?.isFirstCopy)
-                            ? "1"
-                            : ""
-                        }`,
-                        width: `${
-                          pocketItems[index]?.width === 2 &&
-                          pocketItems[index]?.isFirstCopy
-                            ? "119px"
-                            : ""
-                        }`,
-                        height: `${
-                          pocketItems[index]?.height === 2 &&
-                          pocketItems[index]?.isFirstCopy
-                            ? "119px"
-                            : ""
-                        }`,
-                      }}
-                    >
-                      {pocketItems[index] && (
-                        <img
-                          src={pocketItems[index].data}
-                          alt={pocketItems[index].name}
-                          onDragStart={(e) =>
-                            handleDragStart(
-                              e,
-                              pocketItems[index],
-                              "pocket",
-                              index
-                            )
-                          }
-                          style={{
-                            width: `${
-                              pocketItems[index]?.width !== 2 &&
-                              pocketItems[index]?.height !== 2
-                                ? "35px"
-                                : pocketItems[index]?.height === 2
-                                ? "40px"
-                                : pocketItems[index]?.width === 2
-                                ? "100%"
-                                : ""
-                            }`,
-                            display: `${
-                              (pocketItems[index]?.width === 2 &&
-                                !pocketItems[index]?.isFirstCopy) ||
-                              (pocketItems[index]?.height === 2 &&
-                                !pocketItems[index]?.isFirstCopy)
-                                ? "none"
-                                : ""
-                            }`,
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
+                  {Array.from({ length: 10 }).map((_, index) => {
+                    const isHidingPlace = index === 4;
+                    return isHidingPlace ? (
+                      <div
+                        className={`${style.inventorySlot} ${
+                          highlightedPocketSlot === index ? style.highlight : ""
+                        } ${isHidingPlace ? style.hidingPlace : ""}`}
+                        key={index}
+                        onDragOver={(e) =>
+                          handleDragOver(
+                            e,
+                            index,
+                            isPocketOpen ? "pocket" : "docs"
+                          )
+                        }
+                        onDrop={(e) =>
+                          handleDrop(e, "pocketHidingPlace", index)
+                        }
+                        style={{
+                          position: `${
+                            (pocketHidingPlaces[index]?.width === 2 &&
+                              pocketHidingPlaces[index]?.isFirstCopy) ||
+                            pocketHidingPlaces[index]?.height === 2
+                              ? "relative"
+                              : ""
+                          }`,
+                          zIndex: `${
+                            (pocketHidingPlaces[index]?.width === 2 &&
+                              pocketHidingPlaces[index]?.isFirstCopy) ||
+                            (pocketHidingPlaces[index]?.height === 2 &&
+                              pocketHidingPlaces[index]?.isFirstCopy)
+                              ? "1"
+                              : ""
+                          }`,
+                          width: `${
+                            pocketHidingPlaces[index]?.width === 2 &&
+                            pocketHidingPlaces[index]?.isFirstCopy
+                              ? "119px"
+                              : ""
+                          }`,
+                          height: `${
+                            pocketHidingPlaces[index]?.height === 2 &&
+                            pocketHidingPlaces[index]?.isFirstCopy
+                              ? "119px"
+                              : ""
+                          }`,
+                        }}
+                      >
+                        {pocketHidingPlaces[index] && (
+                          <img
+                            src={pocketHidingPlaces[index].data}
+                            alt={pocketHidingPlaces[index].name}
+                            onDragStart={(e) =>
+                              handleDragStart(
+                                e,
+                                pocketHidingPlaces[index],
+                                "pocketHidingPlace",
+                                index
+                              )
+                            }
+                            style={{
+                              width: `${
+                                pocketHidingPlaces[index]?.width !== 2 &&
+                                pocketHidingPlaces[index]?.height !== 2
+                                  ? "35px"
+                                  : pocketHidingPlaces[index]?.height === 2
+                                  ? "40px"
+                                  : pocketHidingPlaces[index]?.width === 2
+                                  ? "100%"
+                                  : ""
+                              }`,
+                              display: `${
+                                (pocketHidingPlaces[index]?.width === 2 &&
+                                  !pocketHidingPlaces[index]?.isFirstCopy) ||
+                                (pocketHidingPlaces[index]?.height === 2 &&
+                                  !pocketHidingPlaces[index]?.isFirstCopy)
+                                  ? "none"
+                                  : ""
+                              }`,
+                            }}
+                          />
+                        )}
+                        <span
+                          className={style.inventoryQtyChange}
+                          style={{ color: "#fff" }}
+                        >
+                          {pocketHidingPlaces[index]
+                            ? pocketHidingPlaces[index].quantity !== 1
+                              ? `x${pocketHidingPlaces[index].quantity}`
+                              : ""
+                            : ""}
+                        </span>
+                        <span
+                          className={style.inventoryWeight}
+                          style={{ color: "#fff" }}
+                        >
+                          {pocketHidingPlaces[index]
+                            ? `${(
+                                pocketHidingPlaces[index]?.weight *
+                                pocketHidingPlaces[index].quantity
+                              ).toFixed(1)}`
+                            : ""}
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        className={`${style.inventorySlot} ${
+                          highlightedPocketSlot === index ? style.highlight : ""
+                        } ${isHidingPlace ? style.hidingPlace : ""}`}
+                        key={index}
+                        onDragOver={(e) =>
+                          handleDragOver(
+                            e,
+                            index,
+                            isPocketOpen ? "pocket" : "docs"
+                          )
+                        }
+                        onDrop={(e) => handleDrop(e, "pocket", index)}
+                        style={{
+                          position: `${
+                            (pocketItems[index]?.width === 2 &&
+                              pocketItems[index]?.isFirstCopy) ||
+                            pocketItems[index]?.height === 2
+                              ? "relative"
+                              : ""
+                          }`,
+                          zIndex: `${
+                            (pocketItems[index]?.width === 2 &&
+                              pocketItems[index]?.isFirstCopy) ||
+                            (pocketItems[index]?.height === 2 &&
+                              pocketItems[index]?.isFirstCopy)
+                              ? "1"
+                              : ""
+                          }`,
+                          width: `${
+                            pocketItems[index]?.width === 2 &&
+                            pocketItems[index]?.isFirstCopy
+                              ? "119px"
+                              : ""
+                          }`,
+                          height: `${
+                            pocketItems[index]?.height === 2 &&
+                            pocketItems[index]?.isFirstCopy
+                              ? "119px"
+                              : ""
+                          }`,
+                        }}
+                      >
+                        {pocketItems[index] && (
+                          <img
+                            src={pocketItems[index].data}
+                            alt={pocketItems[index].name}
+                            onDragStart={(e) =>
+                              handleDragStart(
+                                e,
+                                pocketItems[index],
+                                "pocket",
+                                index
+                              )
+                            }
+                            style={{
+                              width: `${
+                                pocketItems[index]?.width !== 2 &&
+                                pocketItems[index]?.height !== 2
+                                  ? "35px"
+                                  : pocketItems[index]?.height === 2
+                                  ? "40px"
+                                  : pocketItems[index]?.width === 2
+                                  ? "100%"
+                                  : ""
+                              }`,
+                              display: `${
+                                (pocketItems[index]?.width === 2 &&
+                                  !pocketItems[index]?.isFirstCopy) ||
+                                (pocketItems[index]?.height === 2 &&
+                                  !pocketItems[index]?.isFirstCopy)
+                                  ? "none"
+                                  : ""
+                              }`,
+                            }}
+                          />
+                        )}
+                        <span className={style.inventoryQtyChange}>
+                          {pocketItems[index]
+                            ? pocketItems[index].quantity !== 1
+                              ? `x${pocketItems[index].quantity}`
+                              : ""
+                            : ""}
+                        </span>
+                        <span className={style.inventoryWeight}>
+                          {pocketItems[index]
+                            ? `${(
+                                pocketItems[index]?.weight *
+                                pocketItems[index].quantity
+                              ).toFixed(1)}`
+                            : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
+
               {isDocOpen && (
                 <div className={style.inventoryFiveColSlots}>
                   {Array.from({ length: 10 }).map((_, index) => (
@@ -423,6 +606,21 @@ function App() {
                           }}
                         />
                       )}
+                      <span className={style.inventoryQtyChange}>
+                        {docsItems[index]
+                          ? docsItems[index].quantity !== 1
+                            ? `x${docsItems[index].quantity}`
+                            : ""
+                          : ""}
+                      </span>
+                      <span className={style.inventoryWeight}>
+                        {docsItems[index]
+                          ? `${(
+                              docsItems[index]?.weight *
+                              docsItems[index].quantity
+                            ).toFixed(1)}`
+                          : ""}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -480,77 +678,193 @@ function App() {
                 <p>1/25 кг</p>
               </div>
               <div className={style.inventoryFiveColSlots}>
-                {Array.from({ length: 20 }).map((_, index) => (
-                  <div
-                    className={`${style.inventorySlot} ${
-                      highlightedBagSlot === index ? style.highlight : ""
-                    } `}
-                    key={index}
-                    onDragOver={(e) => handleDragOver(e, index, "bag")}
-                    onDrop={(e) => handleDrop(e, "bag", index)}
-                    style={{
-                      position: `${
-                        (bagItems[index]?.width === 2 &&
-                          bagItems[index]?.isFirstCopy) ||
-                        bagItems[index]?.height === 2
-                          ? "relative"
-                          : ""
-                      }`,
-                      zIndex: `${
-                        (bagItems[index]?.width === 2 &&
-                          bagItems[index]?.isFirstCopy) ||
-                        (bagItems[index]?.height === 2 &&
-                          bagItems[index]?.isFirstCopy)
-                          ? "1"
-                          : ""
-                      }`,
-                      width: `${
-                        bagItems[index]?.width === 2 &&
-                        bagItems[index]?.isFirstCopy
-                          ? "119px"
-                          : ""
-                      }`,
-                      height: `${
-                        bagItems[index]?.height === 2 &&
-                        bagItems[index]?.isFirstCopy
-                          ? "119px"
-                          : ""
-                      }`,
-                    }}
-                  >
-                    {bagItems[index] && (
-                      <img
-                        src={bagItems[index].data}
-                        alt={bagItems[index].name}
-                        className={style.inventoryItem}
-                        draggable
-                        onDragStart={(e) =>
-                          handleDragStart(e, bagItems[index], "bag", index)
-                        }
-                        style={{
-                          width: `${
-                            bagItems[index]?.width !== 2 &&
-                            bagItems[index]?.height !== 2
-                              ? "35px"
-                              : bagItems[index]?.height === 2
-                              ? "40px"
-                              : bagItems[index]?.width === 2
-                              ? "100%"
-                              : ""
-                          }`,
-                          display: `${
-                            (bagItems[index]?.width === 2 &&
-                              !bagItems[index]?.isFirstCopy) ||
-                            (bagItems[index]?.height === 2 &&
-                              !bagItems[index]?.isFirstCopy)
-                              ? "none"
-                              : ""
-                          }`,
-                        }}
-                      />
-                    )}
-                  </div>
-                ))}
+                {Array.from({ length: 20 }).map((_, index) => {
+                  const isHidingPlace = index === 4 || index === 9;
+
+                  return isHidingPlace ? (
+                    <div
+                      className={`${style.inventorySlot} ${
+                        highlightedBagSlot === index ? style.highlight : ""
+                      } ${isHidingPlace ? style.hidingPlace : ""}`}
+                      key={index}
+                      onDragOver={(e) =>
+                        handleDragOver(e, index, "bagHidingPlace")
+                      }
+                      onDrop={(e) => handleDrop(e, "bagHidingPlace", index)}
+                      style={{
+                        position: `${
+                          (bagHidingPlaces[index]?.width === 2 &&
+                            bagHidingPlaces[index]?.isFirstCopy) ||
+                          bagHidingPlaces[index]?.height === 2
+                            ? "relative"
+                            : ""
+                        }`,
+                        zIndex: `${
+                          (bagHidingPlaces[index]?.width === 2 &&
+                            bagHidingPlaces[index]?.isFirstCopy) ||
+                          (bagHidingPlaces[index]?.height === 2 &&
+                            bagHidingPlaces[index]?.isFirstCopy)
+                            ? "1"
+                            : ""
+                        }`,
+                        width: `${
+                          bagHidingPlaces[index]?.width === 2 &&
+                          bagHidingPlaces[index]?.isFirstCopy
+                            ? "119px"
+                            : ""
+                        }`,
+                        height: `${
+                          bagHidingPlaces[index]?.height === 2 &&
+                          bagHidingPlaces[index]?.isFirstCopy
+                            ? "119px"
+                            : ""
+                        }`,
+                      }}
+                    >
+                      {bagHidingPlaces[index] && (
+                        <img
+                          src={bagHidingPlaces[index].data}
+                          alt={bagHidingPlaces[index].name}
+                          className={style.inventoryItem}
+                          draggable
+                          onDragStart={(e) =>
+                            handleDragStart(
+                              e,
+                              bagHidingPlaces[index],
+                              "bagHidingPlace",
+                              index
+                            )
+                          }
+                          style={{
+                            width: `${
+                              bagHidingPlaces[index]?.width !== 2 &&
+                              bagHidingPlaces[index]?.height !== 2
+                                ? "35px"
+                                : bagHidingPlaces[index]?.height === 2
+                                ? "40px"
+                                : bagHidingPlaces[index]?.width === 2
+                                ? "100%"
+                                : ""
+                            }`,
+                            display: `${
+                              (bagHidingPlaces[index]?.width === 2 &&
+                                !bagHidingPlaces[index]?.isFirstCopy) ||
+                              (bagHidingPlaces[index]?.height === 2 &&
+                                !bagHidingPlaces[index]?.isFirstCopy)
+                                ? "none"
+                                : ""
+                            }`,
+                          }}
+                        />
+                      )}{" "}
+                      <span
+                        className={style.inventoryQtyChange}
+                        style={{ color: "#fff" }}
+                      >
+                        {bagHidingPlaces[index]
+                          ? bagHidingPlaces[index].quantity !== 1
+                            ? `x${bagHidingPlaces[index].quantity}`
+                            : ""
+                          : ""}
+                      </span>
+                      <span
+                        className={style.inventoryWeight}
+                        style={{ color: "#fff" }}
+                      >
+                        {bagHidingPlaces[index]
+                          ? `${(
+                              bagHidingPlaces[index]?.weight *
+                              bagHidingPlaces[index].quantity
+                            ).toFixed(1)}`
+                          : ""}
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      className={`${style.inventorySlot} ${
+                        highlightedBagSlot === index ? style.highlight : ""
+                      }`}
+                      key={index}
+                      onDragOver={(e) => handleDragOver(e, index, "bag")}
+                      onDrop={(e) => handleDrop(e, "bag", index)}
+                      style={{
+                        position: `${
+                          (bagItems[index]?.width === 2 &&
+                            bagItems[index]?.isFirstCopy) ||
+                          bagItems[index]?.height === 2
+                            ? "relative"
+                            : ""
+                        }`,
+                        zIndex: `${
+                          (bagItems[index]?.width === 2 &&
+                            bagItems[index]?.isFirstCopy) ||
+                          (bagItems[index]?.height === 2 &&
+                            bagItems[index]?.isFirstCopy)
+                            ? "1"
+                            : ""
+                        }`,
+                        width: `${
+                          bagItems[index]?.width === 2 &&
+                          bagItems[index]?.isFirstCopy
+                            ? "119px"
+                            : ""
+                        }`,
+                        height: `${
+                          bagItems[index]?.height === 2 &&
+                          bagItems[index]?.isFirstCopy
+                            ? "119px"
+                            : ""
+                        }`,
+                      }}
+                    >
+                      {bagItems[index] && (
+                        <img
+                          src={bagItems[index].data}
+                          alt={bagItems[index].name}
+                          className={style.inventoryItem}
+                          draggable
+                          onDragStart={(e) =>
+                            handleDragStart(e, bagItems[index], "bag", index)
+                          }
+                          style={{
+                            width: `${
+                              bagItems[index]?.width !== 2 &&
+                              bagItems[index]?.height !== 2
+                                ? "35px"
+                                : bagItems[index]?.height === 2
+                                ? "40px"
+                                : bagItems[index]?.width === 2
+                                ? "100%"
+                                : ""
+                            }`,
+                            display: `${
+                              (bagItems[index]?.width === 2 &&
+                                !bagItems[index]?.isFirstCopy) ||
+                              (bagItems[index]?.height === 2 &&
+                                !bagItems[index]?.isFirstCopy)
+                                ? "none"
+                                : ""
+                            }`,
+                          }}
+                        />
+                      )}{" "}
+                      <span className={style.inventoryQtyChange}>
+                        {bagItems[index]
+                          ? bagItems[index].quantity !== 1
+                            ? `x${bagItems[index].quantity}`
+                            : ""
+                          : ""}
+                      </span>
+                      <span className={style.inventoryWeight}>
+                        {bagItems[index]
+                          ? `${(
+                              bagItems[index]?.weight * bagItems[index].quantity
+                            ).toFixed(1)}`
+                          : ""}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
             {/* health, water indicators */}

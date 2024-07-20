@@ -24,14 +24,17 @@ p {
   font-weight: 700;
   line-height: 36.31px;
   text-align: left;
-  color: #393939;
+  color: #606060;
 }
 span {
-  font-size: 25px;
-  font-style: italic;
-  font-weight: 400;
-  line-height: 44.03px;
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 9px;
+  line-height: 17.58px;
   text-align: left;
+  text-align: left;
+  color: #606060;
 }
 
 button {
@@ -235,11 +238,25 @@ button {
           &.highlight {
             background-color: #303030;
           }
+          .inventoryQtyChange {
+            position: absolute;
+            
+            top: -2px;
+            right: 2px;
+          }
+          .inventoryWeight {
+            position: absolute;
+            
+            text-align: left;
+            bottom: -2px;
+            right: 2px;
+          }
         }
-        .bagHiddingPlace {
+        .bagFirstHiddingPlace {
           background-color: rgba(201, 157, 62, 0.4);
-          grid-column: 5;
-          grid-row: 1;
+        }
+        .hidingPlace {
+          background-color: rgba(201, 157, 62, 0.4);
         }
       }
       .inventoryFourColSlots {
