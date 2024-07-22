@@ -14,10 +14,6 @@ export const InventoryProvider = ({ children }) => {
     docs: initializeItems(docsData),
     selectedItems: [],
     bagHidingData: [],
-    overWeight: {
-      pocket: 0,
-      bag: 0,
-    },
     weight: {
       docs: 0,
       pocket: 0,
@@ -39,7 +35,7 @@ export const InventoryProvider = ({ children }) => {
     setInventoryData((prevData) => ({
       ...prevData,
       weight: {
-        docs: calculateWeight(prevData.docs),
+        docs: calculateWeight(prevData?.docs),
         pocket: calculateWeight(prevData.pocket),
         bag: calculateWeight(prevData.bag),
       },
@@ -269,24 +265,34 @@ export const InventoryProvider = ({ children }) => {
         };
       }
 
+       // Логика для размещения пуль при размещении оружия
+    if (
+      item.type === "steelArms" &&
+      (targetIndex === 0 || targetIndex === 4)
+    ) {
+      // Удаление пуль из старого места оружия
+      const bullets = sourceData.filter(
+        (i) => i?.type === "bullet" && i?.model === item.model
+      );
+      sourceData.forEach((i, idx) => {
+        if (i?.type === "bullet" && i?.model === item.model) {
+          sourceData[idx] = null;
+        }
+      });
 
-     // Логика для размещения пуль при размещении оружия
-if (item.type === "steelArms" && (targetIndex === 0 || targetIndex === 4)) {
-  const bullets = sourceData.filter(
-    (i) => i?.type === "bullet" && i?.model === item.model
-  );
+      // Проверка и размещение пуль в слоты 2 и 6
+      if (bullets.length > 0) {
+        if (!targetData[2]) {
+          targetData[2] = bullets[0];
+          bullets.shift();
+        }
 
-  // Проверка и размещение пуль в слоты 2 и 6
-  if (bullets.length > 0) {
-    if (!targetData[2]) {
-      targetData[2] = bullets.shift(); // Перемещение пули в слот 2
+        if (!targetData[6] && bullets.length > 0) {
+          targetData[6] = bullets[0];
+          bullets.shift();
+        }
+      }
     }
-    if (!targetData[6] && bullets.length > 0) {
-      targetData[6] = bullets.shift(); // Перемещение пули в слот 6
-    }
-  }
-}
-
 
       updatedData[source] = sourceData; // Удаление null элементов
       updatedData[target] = targetData;
