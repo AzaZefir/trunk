@@ -1,0 +1,18 @@
+.container {
+  max-width: 1200px;
+  margin: 45px auto 0;
+  display: flex;
+  justify-content: space-between;
+  .inventoryContent {
+    width: 50%;
+    .inventory {
+      display: flex;
+      gap: 60px;
+    }
+    .inventoryFiveColSlots {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      grid-auto-rows: 60px;
+    }
+  }
+}

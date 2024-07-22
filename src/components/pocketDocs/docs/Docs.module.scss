@@ -1,0 +1,5 @@
+.inventoryFiveColSlots {
+  display: grid;
+  grid-template-columns: repeat(5, 60px);
+  grid-auto-rows: 60px;
+}

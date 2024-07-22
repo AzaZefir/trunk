@@ -1,0 +1,36 @@
+.inventorySlot {
+  position: relative;
+  background-color: #c99d3e66;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(48 48 48);
+  backdrop-filter: blur(9px);
+  width: 60px;
+  height: 60px;
+  img {
+    cursor: grab;
+  }
+  .inventoryQtyChange {
+    position: absolute;
+    font-family: "Roboto", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 9px;
+    line-height: 17.58px;
+    text-align: left;
+    top: -2px;
+    right: 2px;
+  }
+  .inventoryWeight {
+    position: absolute;
+    font-family: "Roboto", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 9px;
+    line-height: 17.58px;
+    text-align: left;
+    bottom: -2px;
+    right: 2px;
+  }
+}

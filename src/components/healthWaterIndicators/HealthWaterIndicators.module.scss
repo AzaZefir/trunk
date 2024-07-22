@@ -1,0 +1,94 @@
+.indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 45px;
+  width: 100%;
+  .healthIndicator {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    grid-auto-rows: 50px;
+    gap: 6px;
+    .healthIcon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      border: 1px solid rgba(48, 48, 48, 1);
+      background: rgba(22, 22, 22, 0.76);
+      backdrop-filter: blur(9px);
+      border-radius: 5px;
+      img {
+        width: 50%;
+        height: 50%;
+      }
+    }
+    .healthIndicatorRange {
+      height: 100%;
+      border: 1px solid rgba(48, 48, 48, 1);
+      background: rgba(22, 22, 22, 0.76);
+      backdrop-filter: blur(9px);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      .healthIndicatorBg {
+        background-color: #303030;
+        height: 12px;
+        width: 90%;
+        border-radius: 5px;
+        overflow: hidden;
+        .healthIndicatorFill {
+          height: 100%;
+          transition: width 0.3s ease-in-out;
+          background-color: #d85454;
+        }
+      }
+    }
+  }
+  .waterIndicator {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    grid-auto-rows: 50px;
+    gap: 6px;
+
+    .waterIcon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      border: 1px solid rgba(48, 48, 48, 1);
+      background: rgba(22, 22, 22, 0.76);
+      backdrop-filter: blur(9px);
+      border-radius: 5px;
+      img {
+        width: 50%;
+        height: 50%;
+      }
+    }
+    .waterIndicatorRange {
+      height: 100%;
+      border: 1px solid rgba(48, 48, 48, 1);
+      background: rgba(22, 22, 22, 0.76);
+      backdrop-filter: blur(9px);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      .waterIndicatorBg {
+        background-color: #303030;
+        height: 12px;
+        width: 90%;
+        border-radius: 5px;
+        overflow: hidden;
+        .waterIndicatorFill {
+          height: 100%;
+          transition: width 0.3s ease-in-out;
+          background-color: #4368d9;
+        }
+      }
+    }
+  }
+}

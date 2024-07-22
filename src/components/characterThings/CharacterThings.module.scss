@@ -1,0 +1,58 @@
+.characterThings {
+  width: 38%;
+  display: flex;
+  justify-content: space-between;
+  .thingsOnLeftSide {
+    margin-top: 20%;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    .thingsSlots {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      .thingsSlot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border: 1px solid rgba(48, 48, 48, 1);
+        background: rgba(22, 22, 22, 0.76);
+        backdrop-filter: blur(9px);
+        border-radius: 5px;
+        img {
+          width: 50%;
+        }
+      }
+    }
+  }
+  .thingsOnRightSide {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+
+    gap: 55px;
+    padding: 0 20px;
+    .thingsSlots {
+      display: flex;
+      flex-direction: column;
+      align-items: end;
+      gap: 10px;
+      .thingsSlot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border: 1px solid rgba(48, 48, 48, 1);
+        background: rgba(22, 22, 22, 0.76);
+        backdrop-filter: blur(9px);
+        border-radius: 5px;
+        img {
+          width: 50%;
+        }
+      }
+    }
+  }
+}

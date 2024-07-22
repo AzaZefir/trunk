@@ -1,3 +1,4 @@
+import revolverBullet from '../assets/bullet-weapons.svg'
 export const pocketData = [
   {
     itemId: 1,
@@ -72,16 +73,16 @@ export const pocketData = [
 ];
 
 export const bagData = [
-  {
-    itemId: 9,
-    name: "Strowberry",
-    quantity: 2,
-    data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719743206/fruit-morango-strawberries-svgrepo-com_scgmib.svg",
-    width: 1,
-    height: 1,
-    weight: 0.1,
-    type: "food",
-  },
+  // {
+  //   itemId: 9,
+  //   name: "Strowberry",
+  //   quantity: 2,
+  //   data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719743206/fruit-morango-strawberries-svgrepo-com_scgmib.svg",
+  //   width: 1,
+  //   height: 1,
+  //   weight: 0.1,
+  //   type: "food",
+  // },
   {
     itemId: 10,
     name: "knife",
@@ -93,13 +94,13 @@ export const bagData = [
     type: "steelArms",
   },
   {
-    itemId: 11,
-    name: "pngwing",
+    itemId: 22,
+    name: "fuel",
     quantity: 1,
-    data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719331871/pngwing.com_1_srbpgs.svg",
-    width: 2,
-    height: 1,
-    weight: 3.5,
+    data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719317984/fuel-svgrepo-com_cy34me.svg",
+    width: 1,
+    height: 2,
+    weight: 3,
     type: "steelArms",
   },
   {
@@ -112,16 +113,16 @@ export const bagData = [
     weight: 0.5,
     type: "steelArms",
   },
-  {
-    itemId: 13,
-    name: "walkie-talkie",
-    quantity: 2,
-    data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719316868/walkie-talkie-svgrepo-com_aqcbnz.svg",
-    width: 1,
-    height: 1,
-    weight: 0.5,
-    type: "steelArms",
-  },
+  // {
+  //   itemId: 13,
+  //   name: "walkie-talkie",
+  //   quantity: 2,
+  //   data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719316868/walkie-talkie-svgrepo-com_aqcbnz.svg",
+  //   width: 1,
+  //   height: 1,
+  //   weight: 0.5,
+  //   type: "steelArms",
+  // },
   {
     itemId: 14,
     name: "molotov-cocktail",
@@ -180,7 +181,8 @@ export const bagData = [
     width: 1,
     height: 1,
     weight: 0.1,
-    type: "steelArms",
+    type: "bullet",
+    model: "ak-47",
   },
   {
     itemId: 21,
@@ -193,14 +195,37 @@ export const bagData = [
     type: "food",
   },
   {
-    itemId: 22,
-    name: "fuel",
+    itemId: 11,
+    name: "pngwing",
     quantity: 1,
-    data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719317984/fuel-svgrepo-com_cy34me.svg",
-    width: 1,
-    height: 2,
-    weight: 3,
+    data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719331871/pngwing.com_1_srbpgs.svg",
+    width: 2,
+    height: 1,
+    weight: 3.5,
     type: "steelArms",
+    model: "ak-47",
+  },
+  {
+    itemId: 27,
+    name: "gun2",
+    quantity: 1,
+    data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719745023/gun-svgrepo-com_cvfd4t.svg",
+    width: 1,
+    height: 1,
+    weight: 0.5,
+    type: "steelArms",
+    model: "revolver",
+  },
+  {
+    itemId: 28,
+    name: "bullet",
+    quantity: 3,
+    data: revolverBullet,
+    width: 1,
+    height: 1,
+    weight: 0.1,
+    type: "bullet",
+    model: "revolver",
   },
 ];
 
