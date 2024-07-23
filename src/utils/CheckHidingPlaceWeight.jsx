@@ -15,6 +15,7 @@ export const checkHidingPlaceWeight = (
     target === "bagHidingData" ||
     (source !== "bag" &&
       source !== "pocket" &&
+      source !== "selectedItems" &&
       targetItem &&
       targetItem.weight * targetItem.quantity > 0.5)
   ) {
