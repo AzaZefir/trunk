@@ -3,7 +3,9 @@ export const checkHidingPlaceWeight = (
   item,
   targetData,
   targetItem,
-  source
+  source,
+  setIsBagHidenPlaceOverweight,
+  setIsPocketHidenPlaceOverweight
 ) => {
   const hidingPlaceWeight = targetData.reduce(
     (total, invItem) =>
@@ -23,7 +25,11 @@ export const checkHidingPlaceWeight = (
     const newHidingPlaceWeight = hidingPlaceWeight + (item.weight || 0);
 
     if (newHidingPlaceWeight > 0.5) {
-      alert("В тайник можно положить предметы суммарно не более 0.5кг!");
+      if (target === "pocketHidingData") {
+        setIsPocketHidenPlaceOverweight(true);
+      } else if (target === "bagHidingData") {
+        setIsBagHidenPlaceOverweight(true);
+      }
       return false;
     }
   }

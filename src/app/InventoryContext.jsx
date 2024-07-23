@@ -30,6 +30,10 @@ export const InventoryProvider = ({ children }) => {
       docs: "",
     },
   });
+  const [isBagHidenPlaceOverweight, setIsBagHidenPlaceOverweight] =
+    useState(false);
+  const [isPocketHidenPlaceOverweight, setIsPocketHidenPlaceOverweight] =
+    useState(false);
 
   useEffect(() => {
     setInventoryData((prevData) => ({
@@ -91,7 +95,15 @@ export const InventoryProvider = ({ children }) => {
       if (
         target !== "docs" &&
         target !== "selectedItems" &&
-        !checkHidingPlaceWeight(target, item, targetData, targetItem, source)
+        !checkHidingPlaceWeight(
+          target,
+          item,
+          targetData,
+          targetItem,
+          source,
+          setIsBagHidenPlaceOverweight,
+          setIsPocketHidenPlaceOverweight
+        )
       ) {
         return prevData;
       }
@@ -265,34 +277,34 @@ export const InventoryProvider = ({ children }) => {
         };
       }
 
-       // Логика для размещения пуль при размещении оружия
-    if (
-      item.type === "steelArms" &&
-      (targetIndex === 0 || targetIndex === 4)
-    ) {
-      // Удаление пуль из старого места оружия
-      const bullets = sourceData.filter(
-        (i) => i?.type === "bullet" && i?.model === item.model
-      );
-      sourceData.forEach((i, idx) => {
-        if (i?.type === "bullet" && i?.model === item.model) {
-          sourceData[idx] = null;
-        }
-      });
+      // Логика для размещения пуль при размещении оружия
+      if (
+        item.type === "steelArms" &&
+        (targetIndex === 0 || targetIndex === 4)
+      ) {
+        // Удаление пуль из старого места оружия
+        const bullets = sourceData.filter(
+          (i) => i?.type === "bullet" && i?.model === item.model
+        );
+        sourceData.forEach((i, idx) => {
+          if (i?.type === "bullet" && i?.model === item.model) {
+            sourceData[idx] = null;
+          }
+        });
 
-      // Проверка и размещение пуль в слоты 2 и 6
-      if (bullets.length > 0) {
-        if (!targetData[2]) {
-          targetData[2] = bullets[0];
-          bullets.shift();
-        }
+        // Проверка и размещение пуль в слоты 2 и 6
+        if (bullets.length > 0) {
+          if (!targetData[2]) {
+            targetData[2] = bullets[0];
+            bullets.shift();
+          }
 
-        if (!targetData[6] && bullets.length > 0) {
-          targetData[6] = bullets[0];
-          bullets.shift();
+          if (!targetData[6] && bullets.length > 0) {
+            targetData[6] = bullets[0];
+            bullets.shift();
+          }
         }
       }
-    }
 
       updatedData[source] = sourceData; // Удаление null элементов
       updatedData[target] = targetData;
@@ -368,7 +380,16 @@ export const InventoryProvider = ({ children }) => {
   }
 
   return (
-    <InventoryContext.Provider value={{ inventoryData, moveItem }}>
+    <InventoryContext.Provider
+      value={{
+        inventoryData,
+        moveItem,
+        isBagHidenPlaceOverweight,
+        isPocketHidenPlaceOverweight,
+        setIsBagHidenPlaceOverweight,
+        setIsPocketHidenPlaceOverweight,
+      }}
+    >
       {children}
     </InventoryContext.Provider>
   );

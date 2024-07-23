@@ -1,14 +1,54 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { InventoryContext } from "../../../app/InventoryContext";
 import style from "./HidenPlace.module.scss";
-import { useInventoryDragDrop } from './../../hooks/useInventoryDragDrop';
+import { useInventoryDragDrop } from "./../../hooks/useInventoryDragDrop";
 const HidenPlace = ({ index, section }) => {
-  const { inventoryData } = useContext(InventoryContext);
+  const {
+    inventoryData,
+    isBagHidenPlaceOverweight,
+    isPocketHidenPlaceOverweight,
+    setIsBagHidenPlaceOverweight,
+    setIsPocketHidenPlaceOverweight,
+  } = useContext(InventoryContext);
   const item = inventoryData?.[section]?.[index] || null;
   const { dragRef, dropRef } = useInventoryDragDrop(index, section, item);
 
+  useEffect(() => {
+    if (isBagHidenPlaceOverweight) {
+      const timer = setTimeout(() => {
+        setIsBagHidenPlaceOverweight(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+    if (isPocketHidenPlaceOverweight) {
+      const timer = setTimeout(() => {
+        setIsPocketHidenPlaceOverweight(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isBagHidenPlaceOverweight, isPocketHidenPlaceOverweight]);
+
   return (
-    <div className={`${style.inventorySlot}`} ref={dropRef} style={{}}>
+    <div
+      className={`${style.inventorySlot}`}
+      ref={dropRef}
+      style={{
+        background: `${
+          section === "bagHidingData"
+            ? isBagHidenPlaceOverweight
+              ? "salmon"
+              : ""
+            : section === "pocketHidingData"
+            ? isPocketHidenPlaceOverweight
+              ? "salmon"
+              : ""
+            : ""
+        }`,
+        transition: "background-color 0.1s ease-in-out",
+      }}
+    >
       {item && (
         <img
           ref={dragRef}
