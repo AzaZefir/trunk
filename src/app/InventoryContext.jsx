@@ -64,27 +64,20 @@ export const InventoryProvider = ({ children }) => {
       if (sourceIndex === -1) {
         return prevData; // Предмет не найден в исходной секции
       }
-
+      // TODO: обычные предметы не должны перемещаться в 0 4 слот
       // Проверка весовых ограничений и прочих условий
       if (target === "selectedItems") {
         if (
           ((targetIndex === 0 || targetIndex === 4) &&
-            item.type !== "steelArms") || // Index 0 or 4 must be steelArms
+            item.type !== "steelArms") || // Индекс 0 или 4 должен быть steelArms
           ((targetIndex === 2 || targetIndex === 6) &&
-            item.type !== "bullet") || // Index 2 or 6 must be bullet
-          ((targetIndex === 3 ||
-            targetIndex === 7 ||
-            targetIndex === 8 ||
-            targetIndex === 9 ||
-            targetIndex === 10 ||
-            targetIndex === 11 ||
-            targetIndex === 12) &&
-            item.type === "bullet") || // Other indexes cannot have width 2 or height 2
-          (targetIndex !== 0 &&
-            targetIndex !== 4 &&
-            targetIndex !== 2 &&
-            targetIndex !== 6 &&
-            (item.width === 2 || item.height === 2)) // Other indexes cannot have width 2 or height 2
+            item.type !== "bullet") || // Индекс 2 или 6 должен быть bullet
+          ([3, 7, 8, 9, 10, 11, 12].includes(targetIndex) &&
+            item.type === "bullet") || // Другие индексы не могут содержать bullet
+          (![0, 4, 2, 6].includes(targetIndex) &&
+            (item.width === 2 || item.height === 2)) || // Другие индексы не могут иметь ширину 2 или высоту 2
+          ((targetIndex !== 0 || targetIndex !== 4) && item.height === 2) || // Индексы, кроме 0 и 4, не могут иметь высоту 2
+          item.type === "bullet"
         ) {
           console.log("Неверное размещение предмета");
           return prevData;
@@ -148,6 +141,14 @@ export const InventoryProvider = ({ children }) => {
       }
 
       if (item.width === 2 || item.height === 2) {
+        const isSlotFree =
+          !targetData[targetIndex] && !targetData[targetIndex + 1];
+
+        if (!isSlotFree && source !== target) {
+          console.log("Slot is occupied");
+          return prevData;
+        }
+
         const rowIndex = Math.floor(targetIndex / 5);
 
         const isAtRightEdge =
@@ -179,8 +180,14 @@ export const InventoryProvider = ({ children }) => {
           return prevData;
         }
       }
+      // TODO: доработать логику перемещения предметов чтобы предметы не менялись с оружием из selectedItems
 
-      if (targetItem && (targetItem.width === 2 || targetItem.height === 2)) {
+      // TODO: сделать возможным перемещение пуль вместе с оружием из selectedItems
+      if (
+        targetItem &&
+        (targetItem.width === 2 || targetItem.height === 2) &&
+        source !== "selectedItems"
+      ) {
         console.log("Cannot swap with a two-slot item");
         return prevData;
       }
@@ -280,12 +287,14 @@ export const InventoryProvider = ({ children }) => {
       // Логика для размещения пуль при размещении оружия
       if (
         item.type === "steelArms" &&
+        target === "selectedItems" &&
         (targetIndex === 0 || targetIndex === 4)
       ) {
         // Удаление пуль из старого места оружия
         const bullets = sourceData.filter(
           (i) => i?.type === "bullet" && i?.model === item.model
         );
+
         sourceData.forEach((i, idx) => {
           if (i?.type === "bullet" && i?.model === item.model) {
             sourceData[idx] = null;
@@ -294,15 +303,13 @@ export const InventoryProvider = ({ children }) => {
 
         // Проверка и размещение пуль в слоты 2 и 6
         if (bullets.length > 0) {
-          if (!targetData[2]) {
-            targetData[2] = bullets[0];
-            bullets.shift();
-          }
+          const targetItemNext = targetData[targetIndex + 2];
 
-          if (!targetData[6] && bullets.length > 0) {
-            targetData[6] = bullets[0];
-            bullets.shift();
-          }
+          targetData[sourceIndex] = targetItem || null;
+          targetData[sourceIndex + 2] = targetItemNext || null;
+
+          targetData[targetIndex] = { ...item, isFirstCopy: true };
+          targetData[targetIndex + 2] = bullets[0];
         }
       }
 

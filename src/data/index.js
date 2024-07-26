@@ -73,16 +73,6 @@ export const pocketData = [
 ];
 
 export const bagData = [
-  // {
-  //   itemId: 9,
-  //   name: "Strowberry",
-  //   quantity: 2,
-  //   data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719743206/fruit-morango-strawberries-svgrepo-com_scgmib.svg",
-  //   width: 1,
-  //   height: 1,
-  //   weight: 0.1,
-  //   type: "food",
-  // },
   {
     itemId: 10,
     name: "knife",
@@ -175,7 +165,7 @@ export const bagData = [
   },
   {
     itemId: 20,
-    name: "bullet",
+    name: "bullet1",
     quantity: 3,
     data: "https://res.cloudinary.com/drdqjr8r6/image/upload/v1719748293/bullet-svgrepo-com_hk2fpl.svg",
     width: 1,
