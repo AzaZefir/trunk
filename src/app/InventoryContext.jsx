@@ -65,6 +65,19 @@ export const InventoryProvider = ({ children }) => {
         return prevData; // Предмет не найден в исходной секции
       }
 
+      // Проверка на перемещение оружия в секцию pocket или docs
+      if (
+        (target === "pocket" ||
+          target === "docs" ||
+          target === "pocketHidingData") &&
+        item.type === "gun"
+      ) {
+        console.log(
+          "Нельзя перемещать оружие в секцию pocket, pocketHidingData или docs"
+        );
+        return prevData;
+      }
+
       // Проверка весовых ограничений и прочих условий
       if (target === "selectedItems") {
         if (
@@ -179,7 +192,6 @@ export const InventoryProvider = ({ children }) => {
         }
       }
 
-      // TODO: сделать возможным перемещение пуль вместе с оружием из selectedItems
       if (
         targetItem &&
         (targetItem.width === 2 || targetItem.height === 2) &&
