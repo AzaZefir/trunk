@@ -64,16 +64,15 @@ export const InventoryProvider = ({ children }) => {
       if (sourceIndex === -1) {
         return prevData; // Предмет не найден в исходной секции
       }
-      // TODO: обычные предметы не должны перемещаться в 0 4 слот
+
       // Проверка весовых ограничений и прочих условий
       if (target === "selectedItems") {
         if (
-          ((targetIndex === 0 || targetIndex === 4) &&
-            item.type !== "steelArms") || // Индекс 0 или 4 должен быть steelArms
+          ((targetIndex === 0 || targetIndex === 4) && item.type !== "gun") || // Индекс 0 или 4 должен быть gun
           ((targetIndex === 2 || targetIndex === 6) &&
             item.type !== "bullet") || // Индекс 2 или 6 должен быть bullet
           ([3, 7, 8, 9, 10, 11, 12].includes(targetIndex) &&
-            item.type === "bullet") || // Другие индексы не могут содержать bullet
+            (item.type === "bullet" || item.type === "gun")) || // Другие индексы не могут содержать bullet
           (![0, 4, 2, 6].includes(targetIndex) &&
             (item.width === 2 || item.height === 2)) || // Другие индексы не могут иметь ширину 2 или высоту 2
           ((targetIndex !== 0 || targetIndex !== 4) && item.height === 2) || // Индексы, кроме 0 и 4, не могут иметь высоту 2
@@ -86,8 +85,6 @@ export const InventoryProvider = ({ children }) => {
 
       // Проверка веса для тайника
       if (
-        target !== "docs" &&
-        target !== "selectedItems" &&
         !checkHidingPlaceWeight(
           target,
           item,
@@ -141,14 +138,15 @@ export const InventoryProvider = ({ children }) => {
       }
 
       if (item.width === 2 || item.height === 2) {
-        const isSlotFree =
-          !targetData[targetIndex] && !targetData[targetIndex + 1];
+        if (source === "selectedItems") {
+          const isSlotFree =
+            !targetData[targetIndex] && !targetData[targetIndex + 1];
 
-        if (!isSlotFree && source !== target) {
-          console.log("Slot is occupied");
-          return prevData;
+          if (!isSlotFree && source !== target) {
+            console.log("Slot is occupied");
+            return prevData;
+          }
         }
-
         const rowIndex = Math.floor(targetIndex / 5);
 
         const isAtRightEdge =
@@ -180,7 +178,6 @@ export const InventoryProvider = ({ children }) => {
           return prevData;
         }
       }
-      // TODO: доработать логику перемещения предметов чтобы предметы не менялись с оружием из selectedItems
 
       // TODO: сделать возможным перемещение пуль вместе с оружием из selectedItems
       if (
@@ -197,6 +194,16 @@ export const InventoryProvider = ({ children }) => {
         sourceIndex !== -1 &&
         targetItem.name !== sourceItem.name
       ) {
+        if (source === "selectedItems") {
+          const isSlotFree =
+            !targetData[targetIndex] && !targetData[targetIndex + 1];
+
+          if (!isSlotFree && source !== target) {
+            console.log("Slot is occupied");
+            return prevData;
+          }
+        }
+
         sourceData[sourceIndex] = targetItem;
         targetData[targetIndex] = sourceItem;
       } else {
@@ -258,6 +265,7 @@ export const InventoryProvider = ({ children }) => {
         targetData[targetIndex] = { ...item, isFirstCopy: true };
         targetData[targetIndex + 1] = {
           ...item,
+          quantity: 0,
           isCopy: true,
           isFirstCopy: false,
         };
@@ -279,6 +287,7 @@ export const InventoryProvider = ({ children }) => {
         targetData[targetIndex] = { ...item, isFirstCopy: true };
         targetData[targetItemBelowIndex] = {
           ...item,
+          quantity: 0,
           isCopy: true,
           isFirstCopy: false,
         };
@@ -286,7 +295,7 @@ export const InventoryProvider = ({ children }) => {
 
       // Логика для размещения пуль при размещении оружия
       if (
-        item.type === "steelArms" &&
+        item.type === "gun" &&
         target === "selectedItems" &&
         (targetIndex === 0 || targetIndex === 4)
       ) {
@@ -311,6 +320,44 @@ export const InventoryProvider = ({ children }) => {
           targetData[targetIndex] = { ...item, isFirstCopy: true };
           targetData[targetIndex + 2] = bullets[0];
         }
+      }
+
+      // Логика для перемещения пуль вместе с оружием
+      if (
+        item.type === "gun" &&
+        source === "selectedItems" &&
+        target !== "selectedItems"
+      ) {
+        // Найти все пули, которые соответствуют оружию
+        const bullets = sourceData.filter(
+          (i) => i?.type === "bullet" && i?.model === item.model
+        );
+
+        // Удалить пули из исходного массива
+        sourceData.forEach((i, idx) => {
+          if (i?.type === "bullet" && i?.model === item.model) {
+            sourceData[idx] = null;
+          }
+        });
+
+        // Переместить каждую пулю в первый свободный слот секции `bag`, кроме индексов 4 и 9
+        bullets.forEach((bullet) => {
+          // Найти индекс целевой секции `bag`
+          const targetDataBag = updatedData["bag"];
+
+          // Найти первый свободный слот в секции `bag`, кроме индексов 4 и 9
+          let firstEmptySlotIndex = targetDataBag.findIndex(
+            (targetItem, idx) => targetItem === null && ![4, 9].includes(idx)
+          );
+
+          if (firstEmptySlotIndex !== -1) {
+            targetDataBag[firstEmptySlotIndex] = bullet;
+          } else {
+            console.log(
+              "Нет свободных слотов для пуль в секции 'bag', кроме индексов 4 и 9"
+            );
+          }
+        });
       }
 
       updatedData[source] = sourceData; // Удаление null элементов
@@ -343,6 +390,7 @@ export const InventoryProvider = ({ children }) => {
           if (currentIndex + 1 < items.length) {
             items[currentIndex + 1] = {
               ...item,
+              quantity: 0,
               isCopy: true,
               isFirstCopy: false,
             };
@@ -363,6 +411,7 @@ export const InventoryProvider = ({ children }) => {
           if (currentIndex + 5 < items.length) {
             items[currentIndex + 5] = {
               ...item,
+              quantity: 0,
               isCopy: true,
               isFirstCopy: false,
             };

@@ -192,7 +192,7 @@ export const bagData = [
     width: 2,
     height: 1,
     weight: 3.5,
-    type: "steelArms",
+    type: "gun",
     model: "ak-47",
   },
   {
@@ -203,7 +203,7 @@ export const bagData = [
     width: 1,
     height: 1,
     weight: 0.5,
-    type: "steelArms",
+    type: "gun",
     model: "revolver",
   },
   {
