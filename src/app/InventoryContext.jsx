@@ -201,6 +201,16 @@ export const InventoryProvider = ({ children }) => {
         return prevData;
       }
 
+      // Новая проверка для предотвращения обмена между предметами gun на индексах 0 и 4
+      if (
+        source !== target &&
+        sourceItem.type === "gun" &&
+        targetItem?.type === "gun"
+      ) {
+        console.log("Cannot swap guns between slots 0 and 4");
+        return prevData;
+      }
+
       if (
         targetItem &&
         sourceIndex !== -1 &&
