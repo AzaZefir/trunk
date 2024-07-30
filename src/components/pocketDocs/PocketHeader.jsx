@@ -11,8 +11,8 @@ const PocketHeader = ({
   const pocketWeight = inventoryData.weight?.pocket;
   const pocketLimit = inventoryData.limit?.pocket;
 
-  const docsWeight = inventoryData.weight.docs;
-  const docsLimit = inventoryData.limit.docs;
+  const docsWeight = inventoryData.weight?.docs;
+  const docsLimit = inventoryData.limit?.docs;
   return (
     <div className={style.pocketHeader}>
       <div className={style.btns}>
